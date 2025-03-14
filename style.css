@@ -137,8 +137,9 @@
   .preview {
     display: flex;
     justify-content: center;
-    gap: 2em;
-    margin-top: 1em;
+    gap: clamp(1rem, 3vw, 4rem);
+    margin: clamp(1rem, 2vw, 2rem) auto;
+    max-width: min(1400px, 90vw);
   }
   
   .category {
@@ -150,9 +151,12 @@
 
   .category-content {
     position: relative;
-    width: 320px;
-    height: 240px;
+    width: 100%;
+    max-width: min(400px, 30vw); /* Larger max-width that scales with viewport */
+    aspect-ratio: 4 / 3;
     overflow: hidden;
+    margin: auto;
+    padding-top: 0;
   }
 
   .category-content img {
@@ -198,11 +202,12 @@
   
   .btn {
     display: inline-block;
-    padding: 0.5em 1em;
+    padding: clamp(0.5em, 1vw, 1em) clamp(1em, 2vw, 2em);
     background-color: #555;
     color: white;
     text-decoration: none;
     margin-top: 0.5em;
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
   }
   
   .btn:hover {
@@ -689,18 +694,18 @@
 
 .photographers-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  max-width: 800px;
+  grid-template-columns: repeat(2, minmax(min(400px, 30vw), 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
+  max-width: min(1200px, 90vw);
   margin: 0 auto;
 }
 
 .photographer {
   width: 100%;
-  max-width: 320px;
-  height: 240px; /* Add fixed height to match the image */
-  margin: 0 auto;
-  overflow: hidden; /* Add this to contain the zooming image */
+  max-width: min(400px, 30vw); /* Match category-content sizing */
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  margin: auto;
 }
 
 .photographer img {
@@ -718,12 +723,11 @@
 @media screen and (max-width: 768px) {
   .photographers-grid {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 1rem;
   }
   
   .photographer {
-    max-width: 280px;
-    height: 210px; /* Match the container height to image height */
+    max-width: min(320px, 90vw);
   }
   
   .photographer img {
@@ -884,5 +888,98 @@
 
   body {
     padding-top: 50px; /* Keep this to account for the fixed mobile menu */
+  }
+}
+
+/* Update font sizes to be more responsive */
+h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+h3 {
+  font-size: clamp(1.2rem, 2vw, 2rem);
+}
+
+p {
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+}
+
+/* Update media queries for larger screens */
+@media screen and (min-width: 1440px) {
+  .category-content,
+  .photographer {
+    max-width: min(500px, 35vw);
+  }
+
+  .photographers-grid {
+    grid-template-columns: repeat(2, minmax(min(500px, 35vw), 1fr));
+  }
+
+  .intro {
+    padding: clamp(2em, 4vw, 4em);
+  }
+}
+
+/* Update the preview section for mobile */
+@media (max-width: 768px) {
+  .preview {
+    flex-direction: column;
+    gap: 2rem;
+    width: 90vw;
+    margin: 2rem auto;
+  }
+
+  .category {
+    width: 100%;
+    max-width: min(320px, 90vw);
+    margin: 0 auto;
+  }
+
+  .category-content {
+    width: 100%;
+    max-width: min(320px, 90vw);
+    aspect-ratio: 4 / 3;
+    margin: 0 auto;
+  }
+
+  /* Make consistent with photographer sections */
+  .category-content img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Update spacing between sections */
+  .photographers-preview {
+    margin: 2em 0;
+  }
+
+  .preview {
+    margin-top: 3em;
+  }
+
+  /* Make category headings consistent */
+  .category h3 {
+    margin-bottom: 1em;
+    font-size: clamp(1.2rem, 2vw, 2rem);
+  }
+
+  /* Adjust button spacing */
+  .category .btn {
+    margin-top: 1em;
+    display: inline-block;
+  }
+
+  /* Make all preview sections the same width */
+  .photographers-grid,
+  .preview,
+  .category {
+    max-width: min(320px, 90vw);
+    margin-left: auto;
+    margin-right: auto;
   }
 }
