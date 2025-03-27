@@ -12,6 +12,10 @@ class GalleryCMS(tk.Tk):
         
         self.image_manager = ImageManager()
         
+        # Create styles for upload area
+        style = ttk.Style()
+        style.configure('DropZone.TFrame', relief='solid', borderwidth=1)
+        
         # Create main container
         self.main_container = ttk.PanedWindow(self, orient='horizontal')
         self.main_container.pack(fill='both', expand=True, padx=5, pady=5)
@@ -29,16 +33,24 @@ class GalleryCMS(tk.Tk):
 
     def create_widgets(self):
         # File selection
-        file_frame = ttk.LabelFrame(self.left_panel, text="Select Image", padding=10)
+        file_frame = ttk.LabelFrame(self.left_panel, text="Select Images", padding=10)
         file_frame.pack(fill="x", padx=10, pady=5)
         
-        self.file_path = tk.StringVar()
-        file_entry = ttk.Entry(file_frame, textvariable=self.file_path, width=50)
-        file_entry.pack(side="left", padx=(0, 5))
+        # Create upload area
+        upload_frame = ttk.Frame(file_frame, style='DropZone.TFrame')
+        upload_frame.pack(fill="x", pady=5, ipady=20)
         
-        browse_btn = ttk.Button(file_frame, text="Browse", command=self.browse_file)
-        browse_btn.pack(side="left")
-
+        browse_btn = ttk.Button(upload_frame, text="Browse Files", command=self.browse_file)
+        browse_btn.pack(pady=10)
+        
+        # List of selected files
+        self.files_listbox = tk.Listbox(file_frame, height=4)
+        self.files_listbox.pack(fill="x", pady=5)
+        
+        # Selected files clear button
+        clear_btn = ttk.Button(file_frame, text="Clear Selection", command=self.clear_selection)
+        clear_btn.pack(pady=(0, 5))
+        
         # Image details
         details_frame = ttk.LabelFrame(self.left_panel, text="Image Details", padding=10)
         details_frame.pack(fill="x", padx=10, pady=5)
@@ -207,41 +219,52 @@ class GalleryCMS(tk.Tk):
         self.sub_category_var.set("")  # Clear current selection
 
     def upload_image(self):
-        file_path = self.file_path.get()
+        files = list(self.files_listbox.get(0, tk.END))
+        if not files:
+            messagebox.showerror("Error", "Please select at least one image")
+            return
+
         main_category = self.main_category_var.get()
         sub_category = self.sub_category_var.get()
-        title = self.title_var.get()
+        title_base = self.title_var.get()
         quality = self.quality_var.get()
 
-        if not all([file_path, main_category, sub_category, title]):
+        if not all([main_category, sub_category, title_base]):
             messagebox.showerror("Error", "Please fill in all fields")
             return
 
-        try:
-            self.image_manager.add_image(
-                file_path,
-                main_category,
-                sub_category,
-                title,
-                quality
-            )
-            messagebox.showinfo("Success", "Image uploaded successfully!")
-            
+        success_count = 0
+        for index, file_path in enumerate(files):
+            try:
+                # Generate unique title for each image if multiple
+                title = f"{title_base} {index + 1}" if len(files) > 1 else title_base
+                
+                self.image_manager.add_image(
+                    file_path,
+                    main_category,
+                    sub_category,
+                    title,
+                    quality
+                )
+                success_count += 1
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to upload {os.path.basename(file_path)}: {str(e)}")
+
+        if success_count > 0:
+            messagebox.showinfo("Success", f"Successfully uploaded {success_count} images!")
             # Clear form
-            self.file_path.set("")
+            self.clear_selection()
             self.title_var.set("")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to upload image: {str(e)}")
 
     def browse_file(self):
         filetypes = (
             ('Image files', '*.jpg *.jpeg *.png'),
             ('All files', '*.*')
         )
-        filename = filedialog.askopenfilename(filetypes=filetypes)
-        if filename:
-            self.file_path.set(filename)
+        filenames = filedialog.askopenfilenames(filetypes=filetypes)
+        if filenames:
+            self.add_files_to_list(filenames)
 
     def rescan_images(self):
         try:
@@ -257,6 +280,33 @@ class GalleryCMS(tk.Tk):
             messagebox.showinfo("Success", "Image database has been rescanned")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to rescan images: {str(e)}")
+
+    def handle_drop(self, event):
+        # Handle both TkDND and manual file selection
+        if hasattr(event, 'data'):
+            files = event.data.split()
+        else:
+            files = event.widget.tk.splitlist(event.data)
+        
+        self.add_files_to_list(files)
+        self.drop_frame.configure(style='DropZone.TFrame')
+        return "break"  # Prevent propagation
+
+    def handle_drag_enter(self, event):
+        self.drop_frame.configure(style='DropZoneActive.TFrame')
+        return
+
+    def handle_drag_leave(self, event):
+        self.drop_frame.configure(style='DropZone.TFrame')
+
+    def add_files_to_list(self, files):
+        valid_extensions = ('.jpg', '.jpeg', '.png')
+        for file in files:
+            if file.lower().endswith(valid_extensions):
+                self.files_listbox.insert(tk.END, file)
+
+    def clear_selection(self):
+        self.files_listbox.delete(0, tk.END)
 
 if __name__ == "__main__":
     app = GalleryCMS()
