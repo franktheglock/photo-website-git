@@ -71,7 +71,7 @@ class GalleryCMS(tk.Tk):
 
         # Compression quality
         ttk.Label(details_frame, text="Compression Quality:").pack(anchor="w")
-        self.quality_var = tk.IntVar(value=85)
+        self.quality_var = tk.IntVar(value=100)
         quality_scale = ttk.Scale(
             details_frame,
             from_=1, to=100,
