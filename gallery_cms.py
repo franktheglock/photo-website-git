@@ -3,6 +3,8 @@ from tkinter import ttk, filedialog, messagebox
 from image_manager import ImageManager
 from PIL import Image, ImageTk
 import os
+from git import Repo
+import datetime
 
 class GalleryCMS(tk.Tk):
     def __init__(self):
@@ -149,6 +151,15 @@ class GalleryCMS(tk.Tk):
             style="Accent.TButton"
         )
         delete_btn.pack(pady=10)
+
+        # Git push button
+        git_push_btn = ttk.Button(
+            manager_frame,
+            text="Push Changes to GitHub",
+            command=self.push_to_git,
+            style="Accent.TButton"
+        )
+        git_push_btn.pack(pady=5)
 
         # Bind selection event
         self.tree.bind('<<TreeviewSelect>>', self.on_select_image)
@@ -307,6 +318,51 @@ class GalleryCMS(tk.Tk):
 
     def clear_selection(self):
         self.files_listbox.delete(0, tk.END)
+
+    def push_to_git(self):
+        try:
+            repo = Repo(os.path.dirname(os.path.abspath(__file__)))
+            
+            # Check if there are changes to commit
+            if not repo.is_dirty(untracked_files=True):
+                messagebox.showinfo("Git Status", "No changes to push")
+                return
+            
+            # Get the changes to be committed
+            changes = repo.git.status(porcelain=True)
+            if not changes:
+                messagebox.showinfo("Git Status", "No changes to push")
+                return
+                
+            # Format the changes for display
+            changes_list = changes.split('\n')
+            formatted_changes = '\n'.join([f"• {change[3:]}" for change in changes_list if change])
+            
+            # Show confirmation dialog with changes
+            confirm = messagebox.askyesno(
+                "Confirm Push",
+                f"The following changes will be pushed:\n\n{formatted_changes}\n\nDo you want to continue?",
+                icon='question'
+            )
+            
+            if not confirm:
+                return
+                
+            # Add all changes
+            repo.git.add(all=True)
+            
+            # Create commit with timestamp
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            commit_message = f"Update gallery content - {timestamp}"
+            repo.index.commit(commit_message)
+            
+            # Push changes
+            origin = repo.remote(name='origin')
+            origin.push()
+            
+            messagebox.showinfo("Success", "Changes pushed to GitHub successfully!")
+        except Exception as e:
+            messagebox.showerror("Git Error", f"Failed to push changes: {str(e)}")
 
 if __name__ == "__main__":
     app = GalleryCMS()
